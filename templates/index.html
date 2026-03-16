@@ -4,53 +4,89 @@
     <title>Session Generator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
-        .card { background: white; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        input { padding: 10px; width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 20px; background: #0088cc; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 50px; background: #eef2f5; }
+        .card { background: white; padding: 40px; border-radius: 15px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; width: 90%; }
+        h2 { color: #333; margin-bottom: 25px; }
+        input { padding: 12px; width: 100%; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { padding: 12px 25px; background: #0088cc; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; transition: background 0.3s; }
+        button:hover { background: #0077b5; }
+        #result { margin-top: 20px; word-break: break-all; color: #28a745; font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 5px; display: none; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>Telegram Session Generator</h2>
+        
         <div id="step1">
-            <input type="text" id="phone" placeholder="+919058880734">
-            <button onclick="sendOTP()">Send OTP</button>
+            <p>Enter number with country code</p>
+            <input type="text" id="phone" placeholder="+911234567890">
+            <button id="sendBtn" onclick="sendOTP()">Send OTP</button>
         </div>
+
         <div id="step2" style="display:none;">
-            <input type="text" id="otp" placeholder="Enter OTP">
-            <button onclick="verifyOTP()">Get String</button>
+            <p>Enter the OTP received on Telegram</p>
+            <input type="text" id="otp" placeholder="1 2 3 4 5">
+            <button id="verifyBtn" onclick="verifyOTP()">Generate String</button>
         </div>
-        <div id="result" style="margin-top:20px; word-break: break-all; color: green; font-weight: bold;"></div>
+
+        <div id="result"></div>
     </div>
 
     <script>
-        async def post(url, data) {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            return res.json();
-        }
-
         async function sendOTP() {
             const phone = document.getElementById('phone').value;
-            const res = await post('/send_otp', {phone});
-            if(res.status === 'success') {
-                document.getElementById('step1').style.display = 'none';
-                document.getElementById('step2').style.display = 'block';
-                alert("OTP Sent!");
-            } else { alert("Error: " + res.msg); }
+            const btn = document.getElementById('sendBtn');
+            btn.innerText = "Sending...";
+            
+            try {
+                const response = await fetch('/send_otp', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({phone: phone})
+                });
+                const res = await response.json();
+                
+                if(res.status === 'success') {
+                    document.getElementById('step1').style.display = 'none';
+                    document.getElementById('step2').style.display = 'block';
+                } else {
+                    alert("Error: " + res.msg);
+                    btn.innerText = "Send OTP";
+                }
+            } catch (err) {
+                alert("Connection failed!");
+                btn.innerText = "Send OTP";
+            }
         }
 
         async function verifyOTP() {
             const phone = document.getElementById('phone').value;
             const otp = document.getElementById('otp').value;
-            const res = await post('/verify_otp', {phone, otp});
-            if(res.status === 'success') {
-                document.getElementById('result').innerText = "Your String: " + res.string;
-            } else { alert("Error: " + res.msg); }
+            const btn = document.getElementById('verifyBtn');
+            btn.innerText = "Verifying...";
+
+            try {
+                const response = await fetch('/verify_otp', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({phone: phone, otp: otp})
+                });
+                const res = await response.json();
+
+                if(res.status === 'success') {
+                    document.getElementById('step2').style.display = 'none';
+                    const resDiv = document.getElementById('result');
+                    resDiv.style.display = 'block';
+                    resDiv.innerText = res.string;
+                    alert("Success! Copy your string below.");
+                } else {
+                    alert("Error: " + res.msg);
+                    btn.innerText = "Generate String";
+                }
+            } catch (err) {
+                alert("Verification failed!");
+                btn.innerText = "Generate String";
+            }
         }
     </script>
 </body>
