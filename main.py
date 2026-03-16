@@ -31,15 +31,30 @@ def send_otp():
     return jsonify(run_async(logic()))
 
 @app.route('/verify_otp', methods=['POST'])
+@app.route('/verify_otp', methods=['POST'])
 def verify_otp():
     data = request.json
-    phone, otp = data.get("phone"), data.get("otp")
+    phone = data.get("phone")
+    otp = data.get("otp")
+    
     async def logic():
+        # Check if client exists in memory
+        if phone not in clients:
+            return {"status": "error", "msg": "Session expired. Send OTP again."}
+            
         client = clients[phone]["client"]
-        await client.sign_in(phone, clients[phone]["hash"], otp)
+        phone_hash = clients[phone]["hash"]
+        
+        # Sign in and export string
+        await client.sign_in(phone, phone_hash, otp)
         string = await client.export_session_string()
         return {"status": "success", "string": string}
-    return jsonify(run_async(logic()))
+
+    try:
+        res = run_async(logic())
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"status": "error", "msg": str(e)})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
