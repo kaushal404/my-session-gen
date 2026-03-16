@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, request, jsonify
-from pyrogram import Client
+from hydrogram import Client
 import asyncio
 
 app = Flask(__name__)
