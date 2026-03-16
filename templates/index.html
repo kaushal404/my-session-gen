@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Session Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
+        .card { background: white; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input { padding: 10px; width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 20px; background: #0088cc; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Telegram Session Generator</h2>
+        <div id="step1">
+            <input type="text" id="phone" placeholder="+919058880734">
+            <button onclick="sendOTP()">Send OTP</button>
+        </div>
+        <div id="step2" style="display:none;">
+            <input type="text" id="otp" placeholder="Enter OTP">
+            <button onclick="verifyOTP()">Get String</button>
+        </div>
+        <div id="result" style="margin-top:20px; word-break: break-all; color: green; font-weight: bold;"></div>
+    </div>
+
+    <script>
+        async def post(url, data) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            return res.json();
+        }
+
+        async function sendOTP() {
+            const phone = document.getElementById('phone').value;
+            const res = await post('/send_otp', {phone});
+            if(res.status === 'success') {
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+                alert("OTP Sent!");
+            } else { alert("Error: " + res.msg); }
+        }
+
+        async function verifyOTP() {
+            const phone = document.getElementById('phone').value;
+            const otp = document.getElementById('otp').value;
+            const res = await post('/verify_otp', {phone, otp});
+            if(res.status === 'success') {
+                document.getElementById('result').innerText = "Your String: " + res.string;
+            } else { alert("Error: " + res.msg); }
+        }
+    </script>
+</body>
+</html>
